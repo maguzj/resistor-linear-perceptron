@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resistor-linear-perceptron"
+version = "0.1.0"
+description = "Theory and finite-size simulations for the resistor perceptron"
+readme = "README.md"
+authors = [{name = "Marcelo Guzman"}]
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10"]
+
+[project.urls]
+Repository = "https://github.com/maguzj/resistor-linear-perceptron"
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.7"]
+notebook = ["matplotlib>=3.7", "jupyterlab>=4", "ipykernel>=6"]
+
+[project.scripts]
+mirror-risk-experiment = "mirror_risk.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

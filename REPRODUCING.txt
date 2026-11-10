@@ -1,0 +1,155 @@
+RESISTOR LINEAR PERCEPTRON
+Numerical calculations
+
+To compare finite-size realizations with the thermodynamic predictions, we
+compute their fixed points and follow the learning dynamics on the same
+datasets. Below we describe how to generate these datasets, carry out the
+calculations, and inspect the results. All commands should be run from the
+repository directory.
+
+Data and parameters
+
+For each realization, we draw independent Gaussian entries according to
+
+    X[mu, i] ~ Normal(0, 1/N),   w_star[i] ~ Normal(0, r^2),
+    noise[mu] ~ Normal(0, sigma^2),   y = X @ w_star + noise.
+
+In the supplied ensembles, r=sigma=1 and the seeds run from 0 through 19. Each
+configuration fixes 40 distinct sample counts, so that an ensemble contains
+800 datasets. We use N=80 and kappa=1.26,2.56 for the main calculations, while
+the configurations at N=25,40 allow us to examine finite-size effects.
+Unconstrained linear regression provides the reference at kappa=infinity.
+
+Since P must be an integer, we prescribe alpha=N/P and set
+P=max(1, round(N/alpha)), then report the realized ratio N/P in the tables.
+At N=25,40, some points on the logarithmic grid give repeated sample counts.
+We replace these with additional points near alpha=1, as specified in the
+configuration files.
+
+Once generated, the datasets are saved and shared by the static solver and
+both dynamics, allowing their results to be compared on the same realizations.
+Each dataset is identified by a fingerprint in the endpoint and checkpoint files.
+
+Fixed points
+
+With these data, the static solver finds the fixed points directly, without
+integrating the learning trajectories. The three N=80 ensembles used in the
+notebook can be generated as follows:
+
+    for kappa in 1.26 2.56; do
+      config="configs/mirror-risk/N80_sweep_alpha40_kappa${kappa}.json"
+      mirror-risk-experiment "$config" --prepare-only
+      python -m mirror_risk.finite_n solve "$config" \
+        "../results/public-release/finite-n/N80_sweep_alpha40_kappa${kappa}"
+    done
+
+    config="configs/linear-gd/N80_sweep_alpha40_linear_gd.json"
+    mirror-risk-experiment "$config" --prepare-only
+    python -m mirror_risk.finite_n solve "$config" \
+      ../results/public-release/finite-n/N80_sweep_alpha40_linear_gd
+
+In each case, --prepare-only saves the datasets before solve computes their
+endpoints. Replacing 80 with 25 or 40 gives the corresponding finite-size
+calculations. Endpoint solving requires a new output directory, which preserves
+any existing results.
+
+Depending on the realization, the resistor solver returns an interior
+least-squares solution, a boundary constrained solution, or a mirror-selected
+interpolator. For comparison, the unconstrained baseline gives ordinary least
+squares or the minimum-l2-norm interpolator. These results are stored in
+endpoints.csv and solutions/ for the resistor model, and in linear_endpoints.csv
+and linear_solutions/ for the linear baseline. Each table row identifies P,
+the seed, the regime, the observables, and the saved weight vector.
+
+Learning dynamics
+
+Both dynamics start from zero. We integrate mirror descent with an Euler update
+in the dual coordinate, using step 0.05/l, and gate gradient descent with step
+0.02/l. Here l=lambda_max(X.T @ X / P). For the gate dynamics, the stored
+variable is u=(G/g0)g, with G=N*kappa and the convention sign(0)=0. The
+unconstrained linear GD baseline instead uses step 1/l.
+
+After preparing the datasets above, run the N=80, kappa=1.26 dynamics with
+
+    mirror-risk-experiment \
+      configs/mirror-risk/N80_sweep_alpha40_kappa1.26.json \
+      --resume --additional-steps 1000000
+
+The requested number of iterations applies to each incomplete trajectory.
+Repeating the command continues from the saved states and adds new iterations,
+while trajectories already marked as converged are skipped. The comparisons
+in the article use finite-time states obtained with up to 1e6 updates, including
+trajectories that have not met the stopping criteria.
+
+To apply the same procedure to all six physical ensembles and their linear
+baselines, use the batch scripts:
+
+    bash scripts/run_fine_alpha_sweeps.sh 1000000
+    bash scripts/run_linear_gd_baselines.sh 1000000
+
+These scripts carry out dataset preparation, endpoint solving, time evolution,
+and comparison of the saved states in sequence.
+
+During time evolution, histories are sampled every 100 updates and checkpoints
+are written every 1000. A trajectory is marked converged only after at least
+1000 steps, once the following conditions hold for three successive checks:
+
+    projected-gradient RMS       < 1e-6
+    relative weight change       < 1e-7
+    relative loss change         < 1e-9
+
+By default, the JSON configurations request 10000 steps per round. A different
+number can be set with --additional-steps.
+
+Saved results and comparisons
+
+The resulting files are written below ../results/public-release/. Each simulation
+directory keeps a snapshot of its configuration alongside the datasets in
+problems/, the checkpoints in runs/, and the tables summary_runs.csv and
+summary_by_alpha.csv. A relative output_directory is resolved from the JSON
+file's location. When changing scientific settings, use a new configuration
+name and output directory.
+
+Once the endpoints and learning states are available, their paired differences
+can be computed with
+
+    python -m mirror_risk.finite_n compare \
+      configs/mirror-risk/N80_sweep_alpha40_kappa1.26.json \
+      ../results/public-release/finite-n/N80_sweep_alpha40_kappa1.26 \
+      ../results/public-release/finite-n/N80-kappa1.26-comparison-round-1
+
+This writes the errors for each saved state to comparison_runs.csv and groups
+them by alpha, method, and endpoint regime in comparison_by_alpha.csv. Since a
+comparison is a fixed snapshot, resuming the trajectories calls for a new
+comparison directory. If only the simulation summaries need to be refreshed,
+use mirror-risk-experiment CONFIG --summary-only without evolving the states.
+
+Plots and relation to the article
+
+To inspect the macroscopic observables, open the notebook with
+
+    python -m jupyterlab notebooks/results.ipynb
+
+It reads the three N=80 endpoint ensembles and compares training loss, risk,
+self-overlap q, and teacher overlap M at kappa=1.26,2.56,infinity. Each point
+is a realization colored by its endpoint regime, while the black curves give
+the thermodynamic predictions. Since r=1, the plotted raw q and M equal q/r^2
+and M/r^2. The datasets and plots are generated locally and are not bundled
+with the code.
+
+The same endpoint tables and saved weights also give the weight geometry and
+sparsity studied in the article. The norm is m=||w||_1/N, and numerical zeros
+are counted using |w_i|<=1e-6.
+
+For the relaxation analysis, the N=80, kappa=1.26 mirror histories are compared
+with the \epsilon of their paired static solutions. The history__time field
+records mirror time s, rather than physical time. The static/dynamic
+comparison uses the same endpoints together with mirror and gate checkpoints
+obtained with up to 1e6 updates, and their paired errors.
+
+Finite-size dependence is obtained by comparing the endpoint means, standard
+deviations, and regime fractions at N=25,40,80 and kappa=1.26. Finally, the
+thermodynamic curves and capacity boundaries are evaluated through the public
+predict and critical_kappa functions in resistor_theory.
+
+The notebook shows the macroscopic observable comparison. 

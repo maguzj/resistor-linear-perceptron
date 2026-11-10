@@ -1,0 +1,38 @@
+{
+  "name": "smoke-test",
+  "output_directory": "../../../results/public-release/simulations/mirror-risk/smoke_test",
+  "N": 12,
+  "alpha_values": [
+    0.5,
+    1.5
+  ],
+  "kappa": 1.2,
+  "sigma": 0.2,
+  "r": 1.0,
+  "seeds": [
+    0,
+    1
+  ],
+  "dynamics": [
+    {
+      "method": "mirror",
+      "step_factor": 0.05,
+      "record_every": 20
+    },
+    {
+      "method": "gate",
+      "step_factor": 0.03,
+      "record_every": 20
+    }
+  ],
+  "convergence": {
+    "check_every": 20,
+    "min_steps": 40,
+    "patience": 2,
+    "projected_gradient_tol": 1e-05,
+    "relative_weight_tol": 1e-06,
+    "relative_loss_tol": 1e-08
+  },
+  "steps_per_round": 500,
+  "checkpoint_every": 100
+}
