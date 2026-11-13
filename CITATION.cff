@@ -1,9 +1,0 @@
-cff-version: 1.2.0
-message: "If you use this code, please cite this repository."
-title: "Resistor linear perceptron"
-authors:
-  - family-names: "Guzman"
-    given-names: "Marcelo"
-version: 0.1.0
-license: MIT
-repository-code: "https://github.com/maguzj/resistor-linear-perceptron"
