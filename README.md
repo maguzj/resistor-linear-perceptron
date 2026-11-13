@@ -6,7 +6,7 @@ points and learning dynamics in a Gaussian teacher–student setting, and compar
 finite-size realizations with the predictions in the high-dimensional limit.
 
 The code includes the fixed-point minimizations, mirror descent, gradient descent
-in the gate variables, and unconstrained linear regression. All methods use the
+in the gate voltage variables, and unconstrained linear regression. All methods use the
 same datasets, so their solutions can be compared realization by realization.
 
 ## Installation
