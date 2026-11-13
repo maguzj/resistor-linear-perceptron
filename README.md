@@ -1,5 +1,8 @@
 # Resistor linear perceptron
 
+[Zenodo archive](https://doi.org/10.5281/zenodo.24193183).
+
+
 This repository contains the numerical calculations for a resistor implementation
 of a linear perceptron.  We study the resulting fixed
 points and learning dynamics in a Gaussian teacher–student setting, and compare
