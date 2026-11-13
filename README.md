@@ -1,6 +1,6 @@
 # Resistor linear perceptron
 
-[Zenodo archive](https://doi.org/10.5281/zenodo.24193183).
+[![DOI](https://zenodo.org/badge/1452815869.svg)](https://doi.org/10.5281/zenodo.24193182)
 
 
 This repository contains the numerical calculations for a resistor implementation
